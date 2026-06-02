@@ -1,5 +1,6 @@
 Flask==3.0.3
 gunicorn==22.0.0
+pymysql
 
 # 과제 명세서: sqlalchemy + mysql-connector 기술 스택 충족
 SQLAlchemy==2.0.30
