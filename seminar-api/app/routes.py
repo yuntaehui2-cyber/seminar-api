@@ -13,6 +13,7 @@ def health_check():
 # ----------------------------------------
 # 세미나룸 API (CRUD)
 # ----------------------------------------
+# 1. 세미나룸 전체 조회
 @bp.route('/api/rooms', methods=['GET'])
 def get_rooms():
     conn = get_db_connection()
@@ -22,6 +23,19 @@ def get_rooms():
     conn.close()
     return jsonify({"items": rooms, "count": len(rooms)})
 
+# 2. 세미나룸 단건(상세) 조회 - [추가됨]
+@bp.route('/api/rooms/<int:room_id>', methods=['GET'])
+def get_room(room_id):
+    conn = get_db_connection()
+    with conn.cursor() as cursor:
+        cursor.execute("SELECT * FROM rooms WHERE id = %s", (room_id,))
+        room = cursor.fetchone()
+    conn.close()
+    if not room:
+        return jsonify({"message": "Room not found"}), 404
+    return jsonify(room)
+
+# 3. 세미나룸 생성
 @bp.route('/api/rooms', methods=['POST'])
 def create_room():
     data = request.get_json()
@@ -34,11 +48,33 @@ def create_room():
     conn.close()
     return jsonify({"id": room_id, "message": "created"}), 201
 
-# TODO: 개별 조회, 수정(PUT), 삭제(DELETE) 루틴도 구조에 맞춰 추가 구현
+# 4. 세미나룸 수정 - [추가됨]
+@bp.route('/api/rooms/<int:room_id>', methods=['PUT'])
+def update_room(room_id):
+    data = request.get_json()
+    conn = get_db_connection()
+    with conn.cursor() as cursor:
+        sql = "UPDATE rooms SET name = %s, capacity = %s, equipment = %s WHERE id = %s"
+        cursor.execute(sql, (data['name'], data['capacity'], data.get('equipment'), room_id))
+    conn.commit()
+    conn.close()
+    return jsonify({"id": room_id, "message": "updated"})
+
+# 5. 세미나룸 삭제 - [추가됨]
+@bp.route('/api/rooms/<int:room_id>', methods=['DELETE'])
+def delete_room(room_id):
+    conn = get_db_connection()
+    with conn.cursor() as cursor:
+        cursor.execute("DELETE FROM rooms WHERE id = %s", (room_id,))
+    conn.commit()
+    conn.close()
+    return jsonify({"id": room_id, "message": "deleted"})
+
 
 # ----------------------------------------
 # 예약 API
 # ----------------------------------------
+# 1. 예약 목록 조회 (필터 지원)
 @bp.route('/api/reservations', methods=['GET'])
 def get_reservations():
     room_id = request.args.get('room_id')
@@ -59,6 +95,7 @@ def get_reservations():
     conn.close()
     return jsonify({"items": reservations, "count": len(reservations)})
 
+# 2. 예약 생성
 @bp.route('/api/reservations', methods=['POST'])
 def create_reservation():
     data = request.get_json()
@@ -75,3 +112,13 @@ def create_reservation():
     conn.commit()
     conn.close()
     return jsonify({"id": res_id, "message": "reserved"}), 201
+
+# 3. 예약 취소(삭제) - [추가됨]
+@bp.route('/api/reservations/<int:res_id>', methods=['DELETE'])
+def delete_reservation(res_id):
+    conn = get_db_connection()
+    with conn.cursor() as cursor:
+        cursor.execute("DELETE FROM reservations WHERE id = %s", (res_id,))
+    conn.commit()
+    conn.close()
+    return jsonify({"id": res_id, "message": "cancelled"})
