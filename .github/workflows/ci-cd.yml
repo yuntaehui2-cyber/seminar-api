@@ -37,5 +37,5 @@ jobs:
           cd /home/pc_0728/projects/seminar-api
           git fetch origin main
           git reset --hard origin/main
-          docker-compose down
-          docker-compose up -d --build
+          docker-compose down --remove-orphans
+          docker-compose up -d --build --force-recreate
