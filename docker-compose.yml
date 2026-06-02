@@ -1,0 +1,42 @@
+services:
+  # 1. 데이터베이스 서비스 (MariaDB)
+  seminar-db:
+    image: mariadb:10.6
+    container_name: seminar_db_container
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: 1234
+      MYSQL_DATABASE: seminar_db
+    ports:
+      - "3340:3306"
+    volumes:
+      - seminar_data:/var/lib/mysql
+    networks:
+      - seminar-network
+
+  # 2. 웹 애플리케이션 서비스 (Flask + Gunicorn)
+  seminar-web:
+    build: .
+    container_name: seminar_web_container
+    restart: always
+    ports:
+      - "5000:5000"
+    environment:
+      - FLASK_ENV=development
+      - DB_HOST=seminar-db
+      - DB_USER=root
+      - DB_PASSWORD=1234
+      - DB_NAME=seminar_db
+    depends_on:
+      - seminar-db
+    networks:
+      - seminar-network
+
+# 3. Docker 볼륨 정의 (지시서 요구사항)
+volumes:
+  seminar_data:
+
+# 4. 컨테이너 간의 독립된 내부 통신을 위한 네트워크 정의
+networks:
+  seminar-network:
+    driver: bridge

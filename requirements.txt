@@ -1,0 +1,9 @@
+Flask==3.0.3
+gunicorn==22.0.0
+
+# 과제 명세서: sqlalchemy + mysql-connector 기술 스택 충족
+SQLAlchemy==2.0.30
+mysql-connector-python==8.4.0
+
+# 환경 변수(.env) 로드용 필수 라이브러리
+python-dotenv==1.0.1
