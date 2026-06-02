@@ -34,8 +34,7 @@ jobs:
     steps:
       - name: Execute Deploy Script
         run: |
-          cd /home/${{ secrets.SERVER_USERNAME }}/flaskapp/address
+          cd /home/pc_0728/projects/seminar-api
           git fetch origin main
           git reset --hard origin/main
-          cd /home/${{ secrets.SERVER_USERNAME }}/flaskapp
           docker-compose restart was-host
