@@ -1,53 +1,41 @@
 name: CI/CD Pipeline
 
-# 1. 트리거 조건: main 브랜치에 코드가 push(또는 PR 머지)되었을 때만 작동합니다.
 on:
   push:
-    branches: [ "main" ]
+    branches:
+      - main
 
 jobs:
-  # [1단계: CI] 테스트 코드를 돌려 검증합니다.
+  # 1. 테스트 단계
   test:
     runs-on: ubuntu-latest
     steps:
-      - name: 체크아웃 소스코드
+      - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: 파이썬 3.12 환경 세팅
+      - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.12'
 
-      - name: 의존성 패키지 설치
+      - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: 테스트 실행 (지시서 요구사항)
+      - name: Run tests
         run: |
-          # A팀원이 작성할 tests/test_api.py를 실행합니다.
-          # (지금은 파일이 비어있어 통과되거나, A의 코드에 맞게 작동할 것입니다)
           python -m unittest discover -s tests -p "test_api.py"
 
-  # [2단계: CD] 테스트가 성공하면 실제 서버에 SSH로 접속해 배포합니다.
+  # 2. 배포 단계 (강사님이 주신 Self-hosted Runner 방식)
   deploy:
-    needs: test # 👈 중요: 테스트(CI)가 성공해야만 배포가 진행됩니다.
-    runs-on: ubuntu-latest
+    needs: test       # 💡 테스트가 완벽히 통과해야만 배포가 시작되도록 묶어줍니다.
+    runs-on: self-hosted
     steps:
-      - name: 운영 서버에 SSH 접속 후 Docker Compose 리로드
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.SERVER_HOST }}
-          username: ${{ secrets.SERVER_USER }}
-          key: ${{ secrets.SERVER_SSH_KEY }}
-          port: 22
-          script: |
-            # 1. 서버의 프로젝트 폴더로 이동합니다. (서버 환경에 맞게 폴더명 조정 가능)
-            cd /home/${{ secrets.SERVER_USER }}/seminar-api || mkdir -p /home/${{ secrets.SERVER_USER }}/seminar-api && cd /home/${{ secrets.SERVER_USER }}/seminar-api
-
-            # 2. 최신 코드를 당겨옵니다.
-            git pull origin main
-
-            # 3. 기존 컨테이너를 안전하게 내리고, 영속화 볼륨은 둔 채 새 코드로 빌드하여 켭니다.
-            docker-compose down
-            docker-compose up -d --build
+      - name: Execute Deploy Script
+        run: |
+          cd /home/${{ secrets.SERVER_USERNAME }}/flaskapp/address
+          git fetch origin main
+          git reset --hard origin/main
+          cd /home/${{ secrets.SERVER_USERNAME }}/flaskapp
+          docker-compose restart was-host
